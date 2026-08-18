@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- 驭缰工程站标：一只握点、一条缰绳、一个转向 -->
+  <rect width="64" height="64" rx="12" fill="#F5F1E8"/>
+  <circle cx="16" cy="44" r="5" fill="#1F1C17"/>
+  <path d="M16 44 C 26 20, 40 18, 50 28" fill="none" stroke="#1F1C17" stroke-width="5" stroke-linecap="round"/>
+  <path d="M50 28 l-9 -1.5 M50 28 l-3.5 8" fill="none" stroke="#C2481D" stroke-width="4.5" stroke-linecap="round"/>
+</svg>
