@@ -1,0 +1,73 @@
+name: deploy-docs
+
+# 构建 VitePress 站点并部署到 GitHub Pages（自定义域名 harness.dyu.sh 在
+# 仓库 Settings → Pages 配置，DNS 侧为 harness CNAME → deusyu.github.io）。
+# 工作流骨架吸收自 PR #21（@Doraemonblogs），本版差异：npm ci（锁定依赖）、
+# Node 22（与本地验证环境一致）。
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# 最小权限：build job 只读源码；pages/id-token 写权限只授给 deploy job，
+# 构建（会执行仓库内脚本）不持有任何部署凭据。
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: read # configure-pages 读取 Pages 配置（GET /pages）需要
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # lastUpdated 与 RSS 条目时间都需要完整 git 历史
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify sidebar completeness (C14)
+        run: npm run docs:verify
+
+      - name: Build site
+        run: npm run docs:build
+
+      - name: Verify dist contract (page ↔ markdown-copy parity)
+        run: npm run docs:verify:dist
+
+      - name: Disable Jekyll
+        run: touch .vitepress/dist/.nojekyll
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: .vitepress/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
